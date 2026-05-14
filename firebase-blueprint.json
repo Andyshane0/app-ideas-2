@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "Represents a user of the ALTER application.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatarUrl": { "type": "string" },
+        "archetype": { "type": "string", "enum": ["STOIC_WARRIOR", "MONK_MODE", "CEO", "ARMY_OFFICER", "ATHLETE", "SCHOLAR"] },
+        "level": { "type": "number" },
+        "xp": { "type": "number" },
+        "aura": { "type": "number" },
+        "streak": { "type": "number" },
+        "disciplineScore": { "type": "number" },
+        "consistencyScore": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "lastActive": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "level", "xp", "aura", "streak"]
+    },
+    "mission": {
+      "title": "Mission",
+      "description": "A daily task assigned to a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "xpReward": { "type": "number" },
+        "completed": { "type": "boolean" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "date": { "type": "string", "format": "date" },
+        "icon": { "type": "string" },
+        "locked": { "type": "boolean" },
+        "unlockTime": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "xpReward", "completed", "date"]
+    },
+    "chatMessage": {
+      "title": "Chat Message",
+      "description": "A message in the AI Future Self chat.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "mode": { "type": "string" }
+      },
+      "required": ["id", "userId", "role", "content", "timestamp"]
+    },
+    "socialPost": {
+      "title": "Social Post",
+      "description": "A post shared in the social feed.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userArchetype": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "auraReacts": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "achievement": { "type": "object" }
+      },
+      "required": ["id", "userId", "content", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Personal user profile data."
+    },
+    "/users/{userId}/missions/{missionId}": {
+      "schema": "mission",
+      "description": "User specific daily missions."
+    },
+    "/users/{userId}/chat/{messageId}": {
+      "schema": "chatMessage",
+      "description": "Chat history with the AI Future Self."
+    },
+    "/posts/{postId}": {
+      "schema": "socialPost",
+      "description": "Global social feed posts."
+    }
+  }
+}

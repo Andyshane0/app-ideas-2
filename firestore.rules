@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 0.1 Global Helpers
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Pillar 2: Validation Blueprints
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() <= 128
+        && data.email is string && (data.email == "" || data.email.size() <= 256)
+        && data.level is number
+        && data.xp is number
+        && data.aura is number
+        && data.streak is number;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false; // Users shouldn't be listable
+      
+      allow create: if isOwner(userId) && isValidId(userId)
+        && isValidUser(incoming())
+        && incoming().uid == request.auth.uid;
+        
+      allow update: if isOwner(userId) && isValidId(userId)
+        && (isValidUser(incoming()) && incoming().uid == existing().uid);
+
+      match /missions/{missionId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(missionId);
+        allow list: if isOwner(userId) && resource.data.userId == userId;
+        allow create, update: if isOwner(userId) && isValidId(userId) && isValidId(missionId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(missionId);
+      }
+      
+      match /chat/{messageId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(messageId);
+        allow list: if isOwner(userId) && resource.data.userId == userId;
+        allow create, update: if isOwner(userId) && isValidId(userId) && isValidId(messageId);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(messageId);
+      }
+    }
+
+    match /posts/{postId} {
+      allow get: if isSignedIn() && isValidId(postId);
+      // For shared feed, we check if it has a userId field content
+      allow list: if isSignedIn() && resource.data.userId >= "";
+      
+      allow create: if isSignedIn() && isValidId(postId)
+        && incoming().userId == request.auth.uid;
+        
+      allow update: if isSignedIn() && isValidId(postId)
+        && (existing().userId == request.auth.uid || incoming().diff(existing()).affectedKeys().hasOnly(['auraReacts']));
+    }
+  }
+}
